@@ -1,0 +1,48 @@
+/**
+ * Memory of 64 registers, each 16 bit-wide. Out holds the value
+ * stored at the memory location specified by address. If load==1, then 
+ * the in value is loaded into the memory location specified by address 
+ * (the loaded value will be emitted to out from the next time step onward).
+ */
+
+CHIP RAM64 {
+    IN in[16], load, address[6];
+    OUT out[16];
+
+    PARTS:
+    /*
+     * Based on the left-most three bits we can know for what RAM8 chip the address refers to:
+     *   000 -> Refers to 1st RAM8
+     *   001 -> Refers to 2nd RAM8
+     *   010 -> Refers to 3rd RAM8
+     *   011 -> Refers to 4th RAM8
+     *   100 -> Refers to 5th RAM8
+     *   101 -> Refers to 6th RAM8
+     *   110 -> Refers to 7th RAM8
+     *   111 -> Refers to 8th RAM8.
+     *
+     * Because that we will use the left-most three bits to select to what RAM8 chip to define which 
+     * RAM8 chip should receive the load bit and/or read the actual state.
+     * 
+     */	   
+
+    DMux8Way(in=load, sel=address[3..5], a=load01, b=load02, c=load03, d=load04, e=load05, f=load06, g=load07, h=load08);
+
+    /*
+     * Get the output of all chips an pass the correct load bit for each one.
+     */
+
+    RAM8(in=in, load=load01, address=address[0..2], out=ram01out);
+    RAM8(in=in, load=load02, address=address[0..2], out=ram02out);
+    RAM8(in=in, load=load03, address=address[0..2], out=ram03out);
+    RAM8(in=in, load=load04, address=address[0..2], out=ram04out);
+    RAM8(in=in, load=load05, address=address[0..2], out=ram05out);
+    RAM8(in=in, load=load06, address=address[0..2], out=ram06out);
+    RAM8(in=in, load=load07, address=address[0..2], out=ram07out);
+    RAM8(in=in, load=load08, address=address[0..2], out=ram08out);
+
+    /*
+     * Again using address[3..5] to get the output of the right RAM8 chip.
+     */
+    Mux8Way16(a=ram01out, b=ram02out, c=ram03out, d=ram04out, e=ram05out, f=ram06out, g=ram07out, h=ram08out, sel=address[3..5], out=out);
+}

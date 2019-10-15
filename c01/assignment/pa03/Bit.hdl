@@ -1,0 +1,17 @@
+/*
+ * 1-bit register:
+ * If load[t] == 1 then 
+ *	 out[t+1] = in[t]
+ * else 
+ *	 out[t+1] = out[t]
+ */
+
+CHIP Bit {
+    IN in, load;
+    OUT out;
+
+    PARTS:
+    Mux(a=savedvalue, b=in, sel=load, out=savedvalue2next);
+    DFF(in=savedvalue2next, out=savedvalue);
+    Or(a=savedvalue, b=savedvalue, out=out);
+}

@@ -1,0 +1,40 @@
+/*
+ * Memory of 16K registers, each 16 bit-wide. Out holds the value
+ * stored at the memory location specified by address. If load==1, then 
+ * the in value is loaded into the memory location specified by address 
+ * (the loaded value will be emitted to out from the next time step onward).
+ */
+
+CHIP RAM16K {
+    IN in[16], load, address[14];
+    OUT out[16];
+
+    PARTS:
+    /*
+     * Based on the left-most three bits we can know for what RAM4K chip the address refers to:
+     *   00 -> Refers to 1st RAM4K
+     *   01 -> Refers to 2nd RAM4K
+     *   10 -> Refers to 3rd RAM4K
+     *   11 -> Refers to 4th RAM4K
+     *
+     * Because that we will use the left-most two bits to select to what RAM4K chip to define which 
+     * RAM4K chip should receive the load bit and/or read the actual state.
+     * 
+     */	   
+
+    DMux4Way(in=load, sel=address[12..13], a=load01, b=load02, c=load03, d=load04);
+
+    /*
+     * Get the output of all chips an pass the correct load bit for each one.
+     */
+
+    RAM4K(in=in, load=load01, address=address[0..11], out=ram01out);
+    RAM4K(in=in, load=load02, address=address[0..11], out=ram02out);
+    RAM4K(in=in, load=load03, address=address[0..11], out=ram03out);
+    RAM4K(in=in, load=load04, address=address[0..11], out=ram04out);
+
+    /*
+     * Again using address[0..10] to get the output of the right RAM4K chip.
+     */
+    Mux4Way16(a=ram01out, b=ram02out, c=ram03out, d=ram04out, sel=address[12..13], out=out);
+}

@@ -1,0 +1,20 @@
+/*
+ * Not gate:
+ *
+ * if (in == 1) then
+ *	out = 0 
+ *  else
+ *	out = 1
+ */
+
+ /*
+  * Primitive CHIP: NAND gate.
+  */
+
+CHIP Not {
+    IN in;
+    OUT out;
+
+    PARTS:
+    Nand(a=in, b=in, out=out);
+}

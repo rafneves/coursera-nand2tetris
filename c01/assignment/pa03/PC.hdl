@@ -1,0 +1,42 @@
+/*
+ * A 16-bit counter with load and reset control bits.
+ * if (reset[t] == 1) 
+ * 	out[t+1] = 0
+ * else if (load[t] == 1)
+ *	out[t+1] = in[t]
+ * else if (inc[t] == 1)
+ *	out[t+1] = out[t] + 1 (integer addition)
+ * else 
+ *	out[t+1] = out[t]
+ */
+
+CHIP PC {
+    IN in[16],load,inc,reset;
+    OUT out[16];
+
+    PARTS:
+    /* Depending on load bit we feed the register with the input value
+     * or just put the value of last iteration
+     */
+
+    Mux16(a=finalresult, b=in, sel=load, out=basevalue);
+
+    Inc16(in=basevalue, out=incbasevalue);
+
+    /*
+     * If inc == 1 and load == 0 whe want to increment the output
+     * of Register gate. Otherwise, we must not to that because 
+     * was not asked to increment or we set the load bit and want
+     * to get the value in in in the next tick.
+     */
+
+    Not(in=load, out=notload);
+    And(a=inc, b=notload, out=actualincrement);
+
+    Mux16(a=basevalue, b=incbasevalue, sel=actualincrement, out=nextvaluetostore);
+    Mux16(a=nextvaluetostore, b=false, sel=reset, out=result);
+
+    Register(in=result, load=true, out=finalresult);
+
+    Or16(a=finalresult, b=finalresult, out=out);
+}
